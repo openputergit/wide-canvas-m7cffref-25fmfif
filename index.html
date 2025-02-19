@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 font-[Inter]">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8 text-gray-800">Project Management System</h1>
+
+        <!-- Project Form -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">Create New Project</h2>
+            <form id="projectForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Project Description</label>
+                        <input type="text" id="projectDesc" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Crop Name</label>
+                        <input type="text" id="cropName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Number of Levels</label>
+                        <input type="number" id="numLevels" min="1" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Project Start Date</label>
+                        <input type="date" id="startDate" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                    </div>
+                </div>
+
+                <div id="levelContainer" class="mt-4">
+                    <!-- Level inputs will be dynamically added here -->
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Create Project</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Projects Table -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">Project List</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Crop</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Levels</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="projectsTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Projects will be dynamically added here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let projects = [];
+        let projectLevels = [];
+
+        // Generate Project ID
+        function generateProjectId() {
+            const date = new Date();
+            const dateString = date.getFullYear().toString() +
+                             (date.getMonth() + 1).toString().padStart(2, '0') +
+                             date.getDate().toString().padStart(2, '0');
+            const projectCount = (projects.length + 1).toString().padStart(4, '0');
+            return `PROJ-${dateString}-${projectCount}`;
+        }
+
+        // Handle number of levels input
+        document.getElementById('numLevels').addEventListener('change', function(e) {
+            const container = document.getElementById('levelContainer');
+            container.innerHTML = '';
+            const levels = parseInt(e.target.value);
+            
+            for(let i = 1; i <= levels; i++) {
+                const div = document.createElement('div');
+                div.className = 'mt-4';
+                div.innerHTML = `
+                    <label class="block text-sm font-medium text-gray-700">Level ${i} Name</label>
+                    <input type="text" class="level-name mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" required>
+                `;
+                container.appendChild(div);
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('projectForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const projectId = generateProjectId();
+            const project = {
+                id: projects.length + 1,
+                projectId: projectId,
+                description: document.getElementById('projectDesc').value,
+                crop: document.getElementById('cropName').value,
+                numLevels: parseInt(document.getElementById('numLevels').value),
+                startDate: document.getElementById('startDate').value
+            };
+
+            // Get level names
+            const levelInputs = document.querySelectorAll('.level-name');
+            const levels = Array.from(levelInputs).map((input, index) => ({
+                id: projectLevels.length + index + 1,
+                projectId: projectId,
+                levelNumber: index + 1,
+                levelName: input.value
+            }));
+
+            projects.push(project);
+            projectLevels.push(...levels);
+
+            updateProjectsTable();
+            this.reset();
+            document.getElementById('levelContainer').innerHTML = '';
+        });
+
+        function updateProjectsTable() {
+            const tbody = document.getElementById('projectsTableBody');
+            tbody.innerHTML = '';
+
+            projects.forEach(project => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${project.projectId}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${project.description}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${project.crop}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${project.numLevels}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${project.startDate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="editProject('${project.projectId}')" class="text-indigo-600 hover:text-indigo-900 mr-2">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button onclick="deleteProject('${project.projectId}')" class="text-red-600 hover:text-red-900">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function editProject(projectId) {
+            const project = projects.find(p => p.projectId === projectId);
+            if (!project) return;
+
+            document.getElementById('projectDesc').value = project.description;
+            document.getElementById('cropName').value = project.crop;
+            document.getElementById('numLevels').value = project.numLevels;
+            document.getElementById('startDate').value = project.startDate;
+
+            // Trigger level inputs generation
+            document.getElementById('numLevels').dispatchEvent(new Event('change'));
+
+            // Fill in level names
+            const levelInputs = document.querySelectorAll('.level-name');
+            const projectLevelsList = projectLevels.filter(l => l.projectId === projectId);
+            levelInputs.forEach((input, index) => {
+                input.value = projectLevelsList[index].levelName;
+            });
+
+            // Remove the old project
+            deleteProject(projectId, false);
+        }
+
+        function deleteProject(projectId, shouldConfirm = true) {
+            if (shouldConfirm && !confirm('Are you sure you want to delete this project?')) return;
+
+            projects = projects.filter(p => p.projectId !== projectId);
+            projectLevels = projectLevels.filter(l => l.projectId !== projectId);
+            updateProjectsTable();
+        }
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
